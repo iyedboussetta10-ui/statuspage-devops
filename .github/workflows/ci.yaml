@@ -44,6 +44,6 @@ jobs:
          	--retry-delay 2 \
          	--retry-connrefused \
          	--fail \
-         	http://localhost:8080/healthz
+         	https://localhost:8080/healthz
 
     	docker rm -f statuspage-ci
