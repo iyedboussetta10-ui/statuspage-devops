@@ -30,8 +30,20 @@ jobs:
         run: docker build -t statuspage:${{ github.sha }} .
 
       - name: Tester le conteneur
-        run: |
-          docker run -d --name statuspage-ci -p 8080:8080 statuspage:${{ github.sha }}
-          sleep 3
-          curl --fail http://localhost:8080/healthz
-          docker rm -f statuspage-ci
+  	run: |
+    	docker run -d --name statuspage-ci -p 8080:8080 statuspage:${{ github.sha }}
+
+    	echo "Attente du démarrage du conteneur..."
+    	sleep 10
+
+    	docker ps -a
+
+    	docker logs statuspage-ci
+
+    	curl --retry 10 \
+         	--retry-delay 2 \
+         	--retry-connrefused \
+         	--fail \
+         	http://localhost:8080/healthz
+
+    	docker rm -f statuspage-ci
