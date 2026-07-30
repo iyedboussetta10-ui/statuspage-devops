@@ -1,49 +1,26 @@
 name: StatusPage CI
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - feature/interface
-
-  pull_request:
-    branches:
-      - main
-      - develop
-
+	push:
+	 branches: [main, develop]
+	pull_request:
+	 branches: [main, develop]
 jobs:
-  validate-and-build:
-    runs-on: ubuntu-latest
+	validate-and-build:
+	 runs-on: ubuntu-latest
+	 steps:
+	  - name: Récupérer le code
+	  uses: actions/checkout@v4
 
-    steps:
-      - name: Récupérer le code
-        uses: actions/checkout@v4
+	  - name: Valider les fichiers
+	  run: ./tests/validate.sh
+	  - name: Construire l'image Docker
+ 	  run: docker build -t statuspage:${{ github.sha }} .
 
-      - name: Donner les droits d'exécution
-        run: chmod +x tests/validate.sh
-
-      - name: Valider les fichiers
-        run: ./tests/validate.sh
-
-      - name: Construire l'image Docker
-        run: docker build -t statuspage:${{ github.sha }} .
-
-      - name: Tester le conteneur
-  	run: |
-    	docker run -d --name statuspage-ci -p 8080:8080 statuspage:${{ github.sha }}
-
-    	echo "Attente du démarrage du conteneur..."
-    	sleep 10
-
-    	docker ps -a
-
-    	docker logs statuspage-ci
-
-    	curl --retry 10 \
-         	--retry-delay 2 \
-         	--retry-connrefused \
-         	--fail \
-         	https://localhost:8080/healthz
-
-    	docker rm -f statuspage-ci
+	  - name: Tester le conteneur
+	  run: |
+	   docker run -d --name statuspage-ci \
+	    -p 8080:8080 statuspage:${{ github.sha }}
+	   sleep 3
+	   curl --fail http://localhost:8080/healthz
+	   docker rm -f statuspage-ci
